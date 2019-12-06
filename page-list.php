@@ -638,7 +638,7 @@ if ( !function_exists( 'pagelist_unqprfx_ext_shortcode' ) ) {
 				}
 			}
 		}
-		$return .= $pagelist_unqprfx_settings['powered_by'];
+		$return .= $pagelist_unq_settings['powered_by'];
 		if ( $list_pages_html ) {
 			$return .= '<div class="page-list page-list-ext ' . $class . '">' . "\n" . $list_pages_html . "\n" . '</div>';
 		} else {
