@@ -203,7 +203,7 @@ if ( !function_exists( 'pagelist_unqprfx_dev_shortcode' ) ) {
 			'number'               => '',
 			'offset'               => 0,
 			'post_type'            => 'page',
-			'post_status'          => 'publish',
+			'post_status'          => 'publish,private,draft',
 			'class'                => '',
 			'strip_tags'           => 1,
 			'strip_shortcodes'     => 1,

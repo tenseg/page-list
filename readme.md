@@ -111,8 +111,9 @@ Also, these defaults are different than they are in `[pagelist_ext]`:
 
 * **parent** - by default parent="0";
 * **hierarchical** - by default: hierarchical="0";
+* **post_status** - by default post_status="publish,private,draft";
 
-This is done so that chile pages only appear thanks to the "recurse" parameter.
+This is done so that chile pages only appear thanks to the "recurse" parameter and all drafts and private pages are included.
 
 ## Frequently Asked Questions
 
