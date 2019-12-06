@@ -410,20 +410,20 @@ if ( !function_exists( 'pagelist_unqprfx_dev_shortcode' ) ) {
 			$class .= $level ? 'page-list-sub' : 'page list page-list-dev';
 			if ( !$level ) {
 				$return .= <<<SUBSTYLE
-				<style>
-					.page-list-sub {
-						padding-left: 2em;
-						border-left: 1px solid lightgray;
-					}
-					h5.page-list-dev-title {
-						margin-bottom: 0;
-					}
-					.page-list-dev-item .status,
-					.page-list-dev-item .password {
-						font-weight: 900;
-					}
-				</style>
-				SUBSTYLE;
+<style>
+	.page-list-sub {
+		padding-left: 2em;
+		border-left: 1px solid lightgray;
+	}
+	h5.page-list-dev-title {
+		margin-bottom: 0;
+	}
+	.page-list-dev-item .status,
+	.page-list-dev-item .password {
+		font-weight: 900;
+	}
+</style>
+SUBSTYLE;
 			}
 			$return .= '<div class="' . $class . '">' . "\n" . $list_pages_html . "\n" . '</div>';
 		} else {
