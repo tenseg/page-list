@@ -176,9 +176,21 @@ if ( !function_exists( 'siblings_unqprfx_shortcode' ) ) {
 	add_shortcode( 'siblings', 'siblings_unqprfx_shortcode' );
 }
 
+if ( !function_exists( 'pagelist_unqprfx_getDataURI' ) ) {
+	function pagelist_unqprfx_getDataURI( $data, $mime = 'text/plain' ) {
+		return 'data: ' . $mime . ';base64,' . base64_encode( $data );
+	}
+}
+
 if ( !function_exists( 'pagelist_unqprfx_dev_shortcode' ) ) {
+	$pagelist_unqprfx_dev_csv_array = [
+		'rows'            => [],
+		'save_header_row' => true,
+		'sequence'        => 0,
+	];
+
 	function pagelist_unqprfx_dev_shortcode( $atts, $level = 0 ) {
-		global $post, $pagelist_unqprfx_settings;
+		global $post, $pagelist_unqprfx_settings, $pagelist_unqprfx_dev_csv_array;
 		$level = intval( $level );
 		$level_atts = shortcode_atts( [
 			'show_image'           => 0,
@@ -214,6 +226,7 @@ if ( !function_exists( 'pagelist_unqprfx_dev_shortcode' ) ) {
 			'recurse'              => 1,
 			'show_details'         => 1,
 			'show_password'        => 1,
+			'show_download'        => 'Download a CSV of this list.',
 		], $atts );
 
 		extract( $level_atts );
@@ -293,8 +306,13 @@ if ( !function_exists( 'pagelist_unqprfx_dev_shortcode' ) ) {
 		$list_pages_html = '';
 		$count = 0;
 		$offset_count = 0;
+
+		$header = [];
+		$save_header_row = $pagelist_unqprfx_dev_csv_array['save_header_row'];
+
 		if ( false !== $list_pages && count( $list_pages ) > 0 ) {
 			foreach ( $list_pages as $page ) {
+				$row = [];
 				$count++;
 				$offset_count++;
 				if ( !empty( $offset ) && is_numeric( $offset ) && $offset_count <= $offset ) {
@@ -303,8 +321,20 @@ if ( !function_exists( 'pagelist_unqprfx_dev_shortcode' ) ) {
 				if (  ( !empty( $offset ) && is_numeric( $offset ) && $offset_count > $offset ) || ( empty( $offset ) ) || ( !empty( $offset ) && !is_numeric( $offset ) ) ) {
 					if (  ( !empty( $number ) && is_numeric( $number ) && $count <= $number ) || ( empty( $number ) ) || ( !empty( $number ) && !is_numeric( $number ) ) ) {
 						$link = get_permalink( $page->ID );
+						if ( $save_header_row ) {
+							$header[] = 'Sequence';
+							$header[] = 'Level';
+							$header[] = 'Permalink';
+						}
+						$row[] = $pagelist_unqprfx_dev_csv_array['sequence']++;
+						$row[] = $level;
+						$row[] = $link;
 						$list_pages_html .= '<div class="page-list-dev-item">';
 						if ( 1 == $show_image ) {
+							if ( $save_header_row ) {
+								$header[] = 'Image URL';
+							}
+							$img_url = '';
 							if ( get_the_post_thumbnail( $page->ID ) ) { // if there is a featured image
 								$list_pages_html .= '<div class="page-list-dev-image"><a href="' . $link . '" title="' . esc_attr( $page->post_title ) . '">';
 								//$list_pages_html .= get_the_post_thumbnail($page->ID, array($image_width,$image_height)); // doesn't work good with image size
@@ -316,33 +346,48 @@ if ( !function_exists( 'pagelist_unqprfx_dev_shortcode' ) ) {
 								$list_pages_html .= '</a></div> ';
 							} else {
 								if ( 1 == $show_first_image ) {
-									$img_scr = pagelist_unqprfx_get_first_image( $page->post_content );
-									if ( !empty( $img_scr ) ) {
+									$img_url = pagelist_unqprfx_get_first_image( $page->post_content );
+									if ( !empty( $img_url ) ) {
 										$list_pages_html .= '<div class="page-list-dev-image"><a href="' . $link . '" title="' . esc_attr( $page->post_title ) . '">';
-										$list_pages_html .= '<img src="' . $img_scr . '" width="' . $image_width . '" alt="' . esc_attr( $page->post_title ) . '" />'; // not using height="'.$image_height.'" because images could be not square shaped and they will be stretched
+										$list_pages_html .= '<img src="' . $img_url . '" width="' . $image_width . '" alt="' . esc_attr( $page->post_title ) . '" />'; // not using height="'.$image_height.'" because images could be not square shaped and they will be stretched
 										$list_pages_html .= '</a></div> ';
 									}
 								}
 							}
+							$row[] = $img_url;
 						}
 
 						if ( 1 == $show_title ) {
+							if ( $save_header_row ) {
+								$header[] = 'Title';
+							}
 							$list_pages_html .= '<h5 class="page-list-dev-title"><a href="' . $link . '" title="' . esc_attr( $page->post_title ) . '">' . $page->post_title . '</a></h5>';
+							$row[] = str_repeat( '- ', $level ) . $page->post_title;
 						}
 						if ( 1 == $show_details ) {
+							if ( $save_header_row ) {
+								$header[] = 'Slug';
+								$header[] = 'Password';
+								$header[] = 'Status';
+								$header[] = 'Date';
+							}
 							$list_pages_html .= '<div class="page-list-details>';
 							$list_pages_html .= '<span class="slug">' . $page->post_name . '</span>';
+							$row[] = $page->post_name;
 							$password = $page->post_password;
 							if ( $password ) {
 								$password = 1 == $show_password ? $password : 'password protected';
 								$list_pages_html .= ' <span class="password">{' . $password . '}</span>';
 							}
+							$row[] = $password;
 							$status = $page->post_status;
 							if ( 'publish' != $status ) {
 								$list_pages_html .= ' <span class="status">[' . $page->post_status . ']</span>';
 							}
+							$row[] = $status;
 							$date = date( 'Y-m-d', strtotime( $page->post_date ) );
 							$list_pages_html .= ' <span class="date">(' . $date . ')</span>';
+							$row[] = $date;
 							$list_pages_html .= '</div>';
 						}
 						if ( 1 == $show_content ) {
@@ -382,11 +427,6 @@ if ( !function_exists( 'pagelist_unqprfx_dev_shortcode' ) ) {
 								}
 							}
 						}
-						if ( $recurse ) {
-							$recurse_atts = $level_atts;
-							$recurse_atts['parent'] = $page->ID;
-							$list_pages_html .= pagelist_unqprfx_dev_shortcode( $recurse_atts, $level + 1 );
-						}
 						if ( '' != $show_meta_key ) {
 							$post_meta = get_post_meta( $page->ID, $show_meta_key, true );
 							if ( !empty( $post_meta ) ) { // hide empty
@@ -400,16 +440,41 @@ if ( !function_exists( 'pagelist_unqprfx_dev_shortcode' ) ) {
 								}
 							}
 						}
+
+						// we should save the CSV info before we recurse
+						if ( $save_header_row ) {
+							$rows[] = $header;
+							$pagelist_unqprfx_dev_csv_array['rows'][] = $header;
+							$save_header_row = false;
+							$pagelist_unqprfx_dev_csv_array['save_header_row'] = false;
+						}
+						$pagelist_unqprfx_dev_csv_array['rows'][] = $row;
+
+						if ( $recurse ) {
+							$recurse_atts = $level_atts;
+							$recurse_atts['parent'] = $page->ID;
+							$list_pages_html .= pagelist_unqprfx_dev_shortcode( $recurse_atts, $level + 1 );
+						}
 						$list_pages_html .= '</div>' . "\n";
 					}
 				}
 			}
 		}
-		$return .= $pagelist_unqprfx_settings['powered_by'];
-		if ( $list_pages_html ) {
-			$class .= $level ? 'page-list-sub' : 'page list page-list-dev';
-			if ( !$level ) {
-				$return .= <<<SUBSTYLE
+
+		// these are things we only add on the outermost level of the recursion
+		if ( 0 == $level ) {
+			$return .= $pagelist_unqprfx_settings['powered_by'];
+			if ( $show_download ) {
+				$f = fopen( 'php://memory', 'w' );
+				foreach ( $pagelist_unqprfx_dev_csv_array['rows'] as $row ) {
+					fputcsv( $f, $row );
+				}
+				fseek( $f, 0 );
+				$csv_data = trim( stream_get_contents( $f ) );
+				$site = get_bloginfo( 'name' );
+				$return .= '<p><a href="' . pagelist_unqprfx_getDataURI( $csv_data, 'text/csv' ) . '" download="' . $site . '.csv">' . $show_download . '</a></p>';
+			}
+			$return .= <<<SUBSTYLE
 <style>
 	.page-list-sub {
 		padding-left: 2em;
@@ -424,10 +489,10 @@ if ( !function_exists( 'pagelist_unqprfx_dev_shortcode' ) ) {
 	}
 </style>
 SUBSTYLE;
-			}
+		}
+		if ( $list_pages_html ) {
+			$class .= $level ? 'page-list-sub' : 'page list page-list-dev';
 			$return .= '<div class="' . $class . '">' . "\n" . $list_pages_html . "\n" . '</div>';
-		} else {
-			$return .= '<!-- no pages to show -->'; // this line will not work, because we show all pages if there is no pages to show
 		}
 		return $return;
 	}

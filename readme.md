@@ -106,6 +106,7 @@ These are the same as the parameters for `[pagelist_ext]` with these additions:
 * **recurse** - show or hide the children of each parent; by default recurse="1", but note that changing this parameter may not have the expected result depending on the settings of the parent and hierarchical parameters; 
 * **show_details** - show or hide the page details, including slug, password, status, and date; by default show_details="1";
 * **show_password** - show or hide the page password in the details; by default show_password="1", if it is set to anything else then "password protected" will be shown in place of the actual password;
+* **show_download** - show or hide a link to a CSV file with the same information; by default show_download="Download a CSV of this list.", if it is set to "" then no link will be shown;
 
 Also, these defaults are different than they are in `[pagelist_ext]`:
 
